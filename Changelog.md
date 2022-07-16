@@ -1,14 +1,23 @@
 OpenCore Changelog
 ==================
+#### v0.8.3
+- Added ext4 file system driver
+- Added support for macOS 13 DP3 Kernel Collection
+- Added `--force-device` option to AudioDxe, allowing UEFI audio on HDA contollers which misreport themselves as non-HDA audio devices
+- Provided optional unsafe fast file logging (suitable only for firmware with a fully compliant FAT32 driver)
+- Fixed incorrect OSBundleLibraries_x86_64 handling during cacheless injection
+- Changed RsaTool not to link against system ssl on macOS
+- Added support for NVRAM reset and set default boot entry when using emulated NVRAM
+- Upgraded emulated NVRAM logout script to allow unsupervised installation of recent macOS OTA updates
+- Added emulated NVRAM driver allowing use separately from OpenDuet
+
 #### v0.8.2
 - Fixed `AppleCpuPmCfgLock` on macOS 13
 - Fixed `DummyPowerManagement` on macOS 13
 - Updated builtin firmware versions for SMBIOS and the rest
 - Added macOS 13 support for `AvoidRuntimeDefrag` Booter quirk
 - Added injected kext bundle version printing in DEBUG builds
-- Added support for NVRAM reset and set default boot entry when using emulated NVRAM
-- Upgraded emulated NVRAM logout script to allow unsupervised installation of recent macOS OTA updates
-- Added emulated NVRAM driver allowing use separately from OpenDuet
+- Added Linux compatibility for CreateVault scripts
 
 #### v0.8.1
 - Improved `ExtendBTFeatureFlags` quirk on newer macOS versions, thx @lvs1974

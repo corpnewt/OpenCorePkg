@@ -155,7 +155,7 @@ PatcherInitContextFromBuffer (
   // and request PRELINK_KERNEL_IDENTIFIER.
   //
 
-  if (!MachoInitializeContext (&Context->MachContext, Buffer, BufferSize, 0, Is32Bit)) {
+  if (!MachoInitializeContext (&Context->MachContext, Buffer, BufferSize, 0, BufferSize, Is32Bit)) {
     DEBUG ((
       DEBUG_INFO,
       "OCAK: %a-bit patcher init from buffer %p %u has unsupported mach-o\n",
@@ -217,6 +217,27 @@ PatcherGetSymbolAddress (
   IN OUT UINT8            **Address
   )
 {
+  return PatcherGetSymbolAddressValue (Context, Name, Address, NULL);
+}
+
+EFI_STATUS
+PatcherGetSymbolValue (
+  IN OUT PATCHER_CONTEXT  *Context,
+  IN     CONST CHAR8      *Name,
+  IN OUT UINT64           *Value
+  )
+{
+  return PatcherGetSymbolAddressValue (Context, Name, NULL, Value);
+}
+
+EFI_STATUS
+PatcherGetSymbolAddressValue (
+  IN OUT PATCHER_CONTEXT  *Context,
+  IN     CONST CHAR8      *Name,
+  IN OUT UINT8            **Address,
+  IN OUT UINT64           *Value
+  )
+{
   MACH_NLIST_ANY  *Symbol;
   CONST CHAR8     *SymbolName;
   UINT64          SymbolAddress;
@@ -264,6 +285,7 @@ PatcherGetSymbolAddress (
         //
         // Proceed to success.
         //
+        SymbolAddress = Context->Is32Bit ? Symbol->Symbol32.Value : Symbol->Symbol64.Value;
         break;
       }
 
@@ -273,7 +295,14 @@ PatcherGetSymbolAddress (
     Index++;
   }
 
-  *Address = (UINT8 *)MachoGetMachHeader (&Context->MachContext) + Offset;
+  if (Address != NULL) {
+    *Address = (UINT8 *)MachoGetFileData (&Context->MachContext) + Offset;
+  }
+
+  if (Value != NULL) {
+    *Value = SymbolAddress;
+  }
+
   return EFI_SUCCESS;
 }
 
@@ -289,7 +318,7 @@ PatcherApplyGenericPatch (
   UINT32      ReplaceCount;
 
   Base = (UINT8 *)MachoGetMachHeader (&Context->MachContext);
-  Size = MachoGetFileSize (&Context->MachContext);
+  Size = MachoGetInnerSize (&Context->MachContext);
   if (Patch->Base != NULL) {
     Status = PatcherGetSymbolAddress (Context, Patch->Base, &Base);
     if (EFI_ERROR (Status)) {
@@ -520,7 +549,7 @@ PatcherBlockKext (
   }
 
   MachBase = (UINT8 *)MachoGetMachHeader (&Context->MachContext);
-  MachSize = MachoGetFileSize (&Context->MachContext);
+  MachSize = MachoGetInnerSize (&Context->MachContext);
 
   //
   // Determine offset of kmod within file.
